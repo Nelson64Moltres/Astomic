@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Game Koin — Demo (Tanpa Uang Asli)</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f1225; color: #fff; margin: 0; }
+    .container { max-width: 900px; margin: auto; padding: 20px; }
+    .card { background: #161a33; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    button { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    input { padding: 10px; border-radius: 5px; border: none; width: 100%; margin-bottom: 10px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loginSection" class="card">
+      <h2>Login</h2>
+      <input type="text" id="loginUsername" placeholder="Username">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button id="loginBtn">Login</button>
+      <p>Belum punya akun? <a href="#" id="showSignUp">Daftar di sini</a></p>
+    </div>
+    <div id="signupSection" class="card hidden">
+      <h2>Sign Up</h2>
+      <input type="text" id="signupUsername" placeholder="Username">
+      <input type="password" id="signupPassword" placeholder="Password">
+      <button id="signupBtn">Daftar</button>
+      <p>Sudah punya akun? <a href="#" id="showLogin">Login di sini</a></p>
+    </div>
+    <div id="gameSection" class="hidden">
+      <div class="card">
+        <h2>Selamat datang, <span id="userDisplay"></span></h2>
+        <p>Saldo: <span id="saldo">0</span> koin</p>
+        <button onclick="topup(500000)">Isi Rp 500.000</button>
+        <button onclick="topup(1000000)">Isi Rp 1.000.000</button>
+        <button onclick="topup(2000000)">Isi Rp 2.000.000</button>
+        <button onclick="topup(10000000)">Isi Rp 10.000.000</button>
+        <br><br>
+        <input id="bet" type="number" placeholder="Jumlah taruhan">
+        <button onclick="play()">Mainkan (x2)</button>
+        <p id="result"></p>
+      </div>
+    </div>
+  </div>
+  <script>
+    let balance = 0;
+
+    document.getElementById('loginBtn').onclick = function() {
+      let user = document.getElementById('loginUsername').value;
+      let pass = document.getElementById('loginPassword').value;
+      let storedUser = localStorage.getItem('user_'+user);
+      if (storedUser && JSON.parse(storedUser).password === pass) {
+        localStorage.setItem('currentUser', user);
+        startGame(user);
+      } else {
+        alert('Username atau password salah');
+      }
+    }
+
+    document.getElementById('signupBtn').onclick = function() {
+      let user = document.getElementById('signupUsername').value;
+      let pass = document.getElementById('signupPassword').value;
+      if (!user || !pass) return alert('Lengkapi semua field');
+      if (localStorage.getItem('user_'+user)) return alert('Username sudah terdaftar');
+      localStorage.setItem('user_'+user, JSON.stringify({ password: pass, balance: 0 }));
+      alert('Pendaftaran berhasil, silakan login');
+      showLogin();
+    }
+
+    document.getElementById('showSignUp').onclick = showSignUp;
+    document.getElementById('showLogin').onclick = showLogin;
+
+    function showSignUp() {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('signupSection').classList.remove('hidden');
+    }
+
+    function showLogin() {
+      document.getElementById('signupSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+    }
+
+    function startGame(user) {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('signupSection').classList.add('hidden');
+      document.getElementById('gameSection').classList.remove('hidden');
+      document.getElementById('userDisplay').textContent = user;
+      balance = JSON.parse(localStorage.getItem('user_'+user)).balance;
+      updateSaldo();
+    }
+
+    function updateSaldo() {
+      document.getElementById('saldo').textContent = balance.toLocaleString('id-ID');
+      let user = localStorage.getItem('currentUser');
+      if (user) {
+        let data = JSON.parse(localStorage.getItem('user_'+user));
+        data.balance = balance;
+        localStorage.setItem('user_'+user, JSON.stringify(data));
+      }
+    }
+
+    function topup(amount) {
+      balance += amount;
+      updateSaldo();
+    }
+
+    function play() {
+      let bet = parseInt(document.getElementById('bet').value);
+      if (bet > balance || bet <= 0) return alert('Taruhan tidak valid');
+      let win = Math.random() < 0.5;
+      if (win) {
+        balance += bet;
+        document.getElementById('result').textContent = 'MENANG! +'+bet+' koin';
+      } else {
+        balance -= bet;
+        document.getElementById('result').textContent = 'KALAH! -'+bet+' koin';
+      }
+      updateSaldo();
+    }
+
+    let currentUser = localStorage.getItem('currentUser');
+    if (currentUser) startGame(currentUser);
+  </script>
+</body>
+</html>
